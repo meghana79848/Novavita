@@ -1,23 +1,37 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginWithGoogle, loginWithGithub } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPopup, setShowPopup] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await login(email, password);
-    navigate('/dashboard');
+
+    // Strict email validation checking
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.toLowerCase() === 'test@test.com') {
+      setShowPopup(true);
+      return;
+    }
+
+    try {
+      await login(email, password);
+      navigate('/dashboard');
+    } catch (error) {
+      setShowPopup(true);
+    }
   };
 
   return (
-    <motion.div
+    <>
+      <motion.div
       initial={{ opacity: 0, rotateY: 90 }}
       animate={{ opacity: 1, rotateY: 0 }}
       exit={{ opacity: 0, rotateY: -90 }}
@@ -75,7 +89,10 @@ export default function Login() {
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <button 
-              onClick={() => alert('Google OAuth integration pending')}
+              onClick={async () => {
+                await loginWithGoogle();
+                navigate('/dashboard');
+              }}
               className="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-medium text-white border border-gray-600 rounded-md hover:bg-gray-800 focus:outline-none transition-colors"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -87,7 +104,10 @@ export default function Login() {
               Google
             </button>
             <button 
-              onClick={() => alert('GitHub OAuth integration pending')}
+              onClick={async () => {
+                await loginWithGithub();
+                navigate('/dashboard');
+              }}
               className="flex justify-center items-center gap-2 w-full px-4 py-2 text-sm font-medium text-white border border-gray-600 rounded-md hover:bg-gray-800 focus:outline-none transition-colors"
             >
               <svg className="h-5 w-5 fill-current" viewBox="0 0 20 20">
@@ -109,5 +129,50 @@ export default function Login() {
         </p>
       </div>
     </motion.div>
+
+      <AnimatePresence>
+        {showPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#12121A] p-6 rounded-xl border border-gray-700 shadow-2xl max-w-sm w-full mx-4 text-center relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 to-orange-500"></div>
+              
+              <div className="mx-auto w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle className="text-red-500" size={24} />
+              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-2">Invalid Email</h3>
+              <p className="text-gray-400 text-sm mb-6">
+                The email you entered is not recognized or invalid. Do you want to Sign Up instead?
+              </p>
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => navigate('/signup')}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg font-medium transition-all"
+                >
+                  Go to Sign Up
+                </button>
+                <button 
+                  onClick={() => setShowPopup(false)}
+                  className="w-full py-2.5 px-4 bg-transparent border border-gray-600 hover:border-gray-500 text-gray-300 rounded-lg font-medium transition-all"
+                >
+                  Try Again
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

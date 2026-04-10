@@ -104,8 +104,63 @@ export default function VitaHub() {
     }, 1000);
   };
 
+  // Dynamic content logic based on which card is open
+  const getPortalMatter = (portalId, symptoms) => {
+    switch (portalId) {
+       case 'v5': return {
+          condition: symptoms ? 'Contact Dermatitis / Skin Eruption' : 'General Roseacea',
+          desc: `Based on your input "${symptoms || 'none'}", this pattern typically represents an allergic skin reaction or mild eczema.`,
+          causes: ['Exposure to allergens (dust, pollen, pets)', 'Reaction to cosmetics or soaps', 'Weather or humidity changes'],
+          precautions: 'Wash the affected area with mild soap, apply aloe vera gel or calamine lotion, and avoid scratching.',
+          doctorName: 'Dr. Sarah Jenkins', doctorSpec: 'Dermatologist & Allergist',
+          drBio: 'Expert in treating eczema, acne, and complex skin allergies with a gentle approach.',
+       };
+       case 'v7': return {
+          condition: symptoms ? 'Canine/Feline Digestive Issue' : 'General Pet Fatigue',
+          desc: `Based on your pet's symptoms "${symptoms || 'none'}", this looks like a minor dietary intolerance or tick-borne illness.`,
+          causes: ['Eating unauthorized food items', 'Tick or flea bites', 'Change in environment/stress'],
+          precautions: 'Ensure your pet has fresh water. Withhold food for 12 hours if vomiting occurs. Check coat for ticks.',
+          doctorName: 'Dr. Emily Clark', doctorSpec: 'Veterinary Professional',
+          drBio: 'Caring vet with 10+ years helping dogs, cats, and exotic animals recover from illnesses.',
+       };
+       case 'v2': return {
+          condition: 'Blood Donor Evaluation',
+          desc: `Blood requirement or donation intent logged. Blood details: "${symptoms || 'Not specified'}".`,
+          causes: ['Emergency Surgery', 'Accident / Trauma', 'Chronic Anemia'],
+          precautions: 'Ensure you have eaten well and are hydrated before donating. Bring valid ID.',
+          doctorName: 'Dr. Richard Lee', doctorSpec: 'Hematologist & Blood Bank Director',
+          drBio: 'Coordinates critical blood drives and urgent transfusions across the city network.',
+       };
+       case 'v3': return {
+          condition: 'Organ Pledge Registration',
+          desc: `Your organ donation intent has been evaluated. Added details: "${symptoms || 'N/A'}".`,
+          causes: ['Voluntary post-life pledge', 'Living donor assessment'],
+          precautions: 'Living donors must pass exhaustive physical and psychological testing.',
+          doctorName: 'Dr. Alan Grant', doctorSpec: 'Transplant Coordinator',
+          drBio: 'Handles organ matching logic and guides donors through the entire lifelong process.',
+       };
+       case 'v12': return {
+          condition: 'Emergency Hospital Routing',
+          desc: `Evaluating nearest emergency centers for: "${symptoms || 'General concern'}".`,
+          causes: ['Urgent trauma', 'Sudden severe illness', 'Accident'],
+          precautions: 'Do not move a critically injured person unless in immediate danger. Keep them warm.',
+          doctorName: 'Dr. Meredith Grey', doctorSpec: 'Head of Trauma & Emergency',
+          drBio: 'Specializes in rapid response stabilization and severe trauma care at City Hospital.',
+       };
+       default: return {
+          condition: symptoms ? 'Viral Infection / Related Issue' : 'General Fatigue',
+          desc: `Based on dummy analysis of "${symptoms || 'none'}", this condition often involves inflammation or seasonal viral responses.`,
+          causes: ['Change in weather patterns', 'Exposure to allergens', 'Weakened immune system'],
+          precautions: 'Hydrate regularly, rest for 8 hours, and consume Vitamin C. Do not self-medicate heavily without consulting a doctor.',
+          doctorName: 'Dr. James Wilson', doctorSpec: 'General Physician & Immunologist',
+          drBio: 'Dedicated professional with numerous successful treatments in generic symptomatology.',
+       };
+    }
+  };
+
   // Renders the main Portal Flow (Form -> Disease -> Doctor -> Book)
   const renderPortalFlow = () => {
+    const matter = activePortal ? getPortalMatter(activePortal.id, patientData.symptoms) : getPortalMatter('', '');
     if (showHistory) {
        return (
          <div style={{ padding: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '16px' }}>
@@ -149,44 +204,39 @@ export default function VitaHub() {
       return (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(255,255,255,0.05)', padding: '30px', borderRadius: '16px' }}>
           <h3 style={{ marginBottom: '15px', color: activePortal.color }}>Analysis Results</h3>
-          <h4 style={{ margin: '0 0 10px 0' }}>Identified Condition: <span style={{ fontWeight: 'normal', color: 'var(--text-muted)' }}>Possible {patientData.symptoms ? 'Viral Infection / Related Issue' : 'General Fatigue'}</span></h4>
+          <h4 style={{ margin: '0 0 10px 0' }}>Identified Condition: <span style={{ fontWeight: 'normal', color: 'var(--text-muted)' }}>{matter.condition}</span></h4>
           <div style={{ marginBottom: '20px' }}>
             <strong>Description:</strong>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Based on dummy analysis of "{patientData.symptoms || 'none'}", this condition often involves inflammation or seasonal viral responses.</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>{matter.desc}</p>
           </div>
           <div style={{ marginBottom: '20px' }}>
             <strong>Common Causes:</strong>
             <ul style={{ color: 'var(--text-muted)', fontSize: '0.95rem', paddingLeft: '20px' }}>
-              <li>Change in weather patterns</li>
-              <li>Exposure to allergens</li>
-              <li>Weakened immune system</li>
+              {matter.causes.map((cause, i) => <li key={i}>{cause}</li>)}
             </ul>
           </div>
           <div style={{ marginBottom: '25px' }}>
              <strong>Basic Precautions:</strong>
              <div style={{ background: 'rgba(16, 185, 129, 0.1)', borderLeft: '3px solid #10B981', padding: '10px 15px', marginTop: '10px', color: '#10B981', fontSize: '0.9rem' }}>
-                Hydrate regularly, rest for 8 hours, and consume Vitamin C. Do not self-medicate heavily without consulting a doctor.
+                {matter.precautions}
              </div>
           </div>
           <button className="btn-primary" onClick={() => setPortalStep(2)} style={{ background: activePortal.color, color: '#000', border: 'none', width: '100%' }}>View Recommended Doctors</button>
         </motion.div>
       )
     } else if (portalStep === 2) {
-      const isPet = activePortal.id === 'v7';
-      const drName = isPet ? 'Emily Clark (Vet)' : 'Sarah Jenkins';
-      const spec = isPet ? 'Veterinary Dermatology' : 'General Physician & Immunologist';
       return (
          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
            <h3 style={{ margin: 0 }}>Recommended Specialists</h3>
            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '16px', display: 'flex', gap: '20px', alignItems: 'center' }}>
               <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: activePortal.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', color: '#000', fontWeight: 'bold' }}>
-                 {isPet ? 'V' : 'Dr.'}
+                 M.D.
               </div>
               <div style={{ flex: 1 }}>
-                 <h4 style={{ margin: '0 0 5px 0', fontSize: '1.2rem' }}>Dr. {drName}</h4>
-                 <p style={{ margin: '0 0 5px 0', color: activePortal.color }}>{spec}</p>
+                 <h4 style={{ margin: '0 0 5px 0', fontSize: '1.2rem' }}>{matter.doctorName}</h4>
+                 <p style={{ margin: '0 0 5px 0', color: activePortal.color }}>{matter.doctorSpec}</p>
                  <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Experience: 12 Years | Rating: 4.9/5</p>
-                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Bio: Dedicated professional with numerous successful treatments in related symptomatology.</p>
+                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>Bio: {matter.drBio}</p>
               </div>
               <button className="btn-primary" onClick={() => setPortalStep(3)} style={{ background: 'transparent', border: `1px solid ${activePortal.color}`, color: 'white' }}>Book Appointment</button>
            </div>
@@ -200,7 +250,7 @@ export default function VitaHub() {
                <input type="text" value={patientData.name} disabled style={{ width: '100%', padding: '15px', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', border: `1px solid #333`, color: 'gray' }} />
                <input type="date" value={bookingData.date} onChange={e => setBookingData({...bookingData, date: e.target.value})} style={{ width: '100%', padding: '15px', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', border: `1px solid ${activePortal.color}40`, color: 'white', colorScheme: 'dark' }} />
                <input type="time" value={bookingData.time} onChange={e => setBookingData({...bookingData, time: e.target.value})} style={{ width: '100%', padding: '15px', borderRadius: '8px', background: 'rgba(0,0,0,0.5)', border: `1px solid ${activePortal.color}40`, color: 'white', colorScheme: 'dark' }} />
-               <button className="btn-primary" onClick={() => saveBooking({ name: activePortal.id === 'v7' ? 'Emily Clark' : 'Sarah Jenkins' })} style={{ background: activePortal.color, color: '#000', border: 'none', padding: '15px' }}>Confirm Booking</button>
+               <button className="btn-primary" onClick={() => saveBooking({ name: matter.doctorName })} style={{ background: activePortal.color, color: '#000', border: 'none', padding: '15px' }}>Confirm Booking</button>
             </div>
          </motion.div>
       )
